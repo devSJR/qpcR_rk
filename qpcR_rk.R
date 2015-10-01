@@ -9,7 +9,7 @@ local({
              email = "Stefan.Roediger@b-tu.de", 
              role = c("aut","cre"))),
     about = list(desc = "GUI interface to perform qPCR amplification curve analysis",
-                 version = "0.0.1-1", url = "")
+                 version = "0.0.1-1", url = "https://github.com/devSJR/qpcR_rk")
   )
   
   ## help page
@@ -69,8 +69,18 @@ local({
 				    options = list("Nonlinear sigmoidal model - l4" = c(val = "l4"), 
 						  "Nonlinear sigmoidal model - l5" = c(val = "l5", chk = TRUE),
 						  "Nonlinear sigmoidal model - l6" = c(val = "l6"),
-						  "Nonlinear sigmoidal model - l6" = c(val = "l6")
+						  "Nonlinear sigmoidal model - l6" = c(val = "l6"),
+						  "Spline" = c(val = "spl3")
 						  ))
+						  
+  Cq.efficiency.drop <- rk.XML.dropdown(label = "Method of efficiency estimation",
+				  options = list("Maximum of the first derivative curve" = c(val = "cpD1"), 
+						"Maximum of the first derivative curve" = c(val = "cpD2", chk = TRUE),
+						"Corbett Research method" = c(val = "CQ"),
+						"Guescini method" = c(val = "Cy0"),
+						"Exponential region" = c(val = "expR"),
+						"Maximum of the efficiency curve" = c(val = "maxE")
+						))
   # Plot preview
   preview.chk <- rk.XML.preview(label = "Preview")
   generic.plot.options <- rk.plotOptions()
@@ -110,7 +120,7 @@ local({
   full.dialog <- rk.XML.dialog(
     label = "qPCR analysis",
     rk.XML.tabbook(tabs = list("Basic settings" = list(basic.settings), 
-                               "Options qPCR analysis" = list(warn.chk),
+                               "Options qPCR analysis" = list(warn.chk, Cq.efficiency.drop),
                                "Smoothing and Pre-processing" = list(smoother.chk, 
 								     method.smooth.drop, 
 								     trans.chk, median.chk, 
@@ -136,8 +146,15 @@ local({
     
     echo("Cq.data <- lapply(2L:ncol(smooth.data), function(i) {\n"),
     echo("\t\tres.fit <- pcrfit(data = smooth.data, cyc = 1, fluo = i, model = ", fit.model.drop,")\n"),
-    echo("\t\tres.efficiency <- efficiency(res.fit, type = \"cpD2\", plot = FALSE)\n"),
-    echo("\t\t})\n")
+    echo("\t\tres.efficiency <- efficiency(res.fit, type = \"", Cq.efficiency.drop,"\", plot = FALSE)\n"),
+    echo("\t\t})\n"),
+    
+    echo("res.out <- t(rbind(sapply(1L:length(Cq.data), function(i) {\n"),
+    echo("\t\tas.data.frame(Cq.data[[i]])\n"),
+    echo("}\n"),
+    echo(")))\n"),
+
+    echo("row.names(res.out) <- colnames(smooth.data[, -1])\n")
   )
   
   JS.print <- rk.paste.JS(
@@ -147,7 +164,8 @@ local({
       echo("lapply(2L:ncol(smooth.data), function(y) {try(lines(smooth.data[, 1], smooth.data[, y], col = 2))})\n")
     ),
     ite("full", rk.paste.JS(
-      echo("\nrk.print(summary(raw.data))\n"),
+      echo("rk.print.literal (\"qPCR analysis results:\")"),
+      echo("\nrk.print(res.out)\n"),
       level = 3)
     )
   )
