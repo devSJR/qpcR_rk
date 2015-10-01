@@ -69,7 +69,7 @@ local({
 				    options = list("Nonlinear sigmoidal model - l4" = c(val = "l4"), 
 						  "Nonlinear sigmoidal model - l5" = c(val = "l5", chk = TRUE),
 						  "Nonlinear sigmoidal model - l6" = c(val = "l6"),
-						  "Nonlinear sigmoidal model - l6" = c(val = "l6"),
+						  "Nonlinear sigmoidal model - l7" = c(val = "l7"),
 						  "Spline" = c(val = "spl3")
 						  ))
 						  
@@ -109,9 +109,10 @@ local({
                                                     "Right" = c(val = "right"),
                                                     "Center" = c(val = "center")))
   ncol.legend.spin <- rk.XML.spinbox(label = "Number of columns in legend", min = "1", initial = "1", real = FALSE)
+  
   legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, rk.XML.stretch(), label="Legend")
 
-  
+  simple.analysis.chk  <- rk.XML.cbox("Complex analysis", value = "1", un.value = "0")
   
   warn.chk  <- rk.XML.cbox("Surpress warnings", value = "1", un.value = "0")
   
@@ -120,14 +121,15 @@ local({
   full.dialog <- rk.XML.dialog(
     label = "qPCR analysis",
     rk.XML.tabbook(tabs = list("Basic settings" = list(basic.settings), 
-                               "Options qPCR analysis" = list(warn.chk, Cq.efficiency.drop),
+                               "Options qPCR analysis" = list(warn.chk),
                                "Smoothing and Pre-processing" = list(smoother.chk, 
 								     method.smooth.drop, 
 								     trans.chk, median.chk, 
 								     bg.outliers.chk, 
 								     method.reg.drop, 
-								     method.norm.drop,
-								     fit.model.drop),
+								     method.norm.drop
+								     ),
+				"Analysis options" = list(Cq.efficiency.drop, simple.analysis.chk, fit.model.drop),
                                "Plot options" = list(generic.plot.options, abline.chk, 
                                                      legend.frame)))
   )
@@ -153,13 +155,15 @@ local({
     echo("\t\tas.data.frame(Cq.data[[i]])\n"),
     echo("}\n"),
     echo(")))\n"),
-
-    echo("row.names(res.out) <- colnames(smooth.data[, -1])\n")
+    echo("row.names(res.out) <- colnames(smooth.data[, -1])\n"),
+    ite(id(simple.analysis.chk), 
+	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"AIC\", \"Rsq\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n"),
+	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\")])\n")
+    )
   )
   
   JS.print <- rk.paste.JS(
     rk.paste.JS.graph(
-      
       echo("plot(NA, NA, xlim = range(raw.data[, 1]), ylim = range(smooth.data[, -1]))\n"),
       echo("lapply(2L:ncol(smooth.data), function(y) {try(lines(smooth.data[, 1], smooth.data[, y], col = 2))})\n")
     ),
