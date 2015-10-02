@@ -34,7 +34,7 @@ local({
   plot.ylab <- rk.XML.input(label = "Ordinate label", initial = "RFU")
   
   var.select <- rk.XML.varselector(label = "Select data")
-  selected.x <- rk.XML.varslot(label = "Cycles", source = var.select, types = "number", required = TRUE)
+  selected.x <- rk.XML.varslot(label = "Cycles", source = var.select, multi = FALSE, types = "number", required = TRUE)
   var.data <- rk.XML.varslot(label = "RFU data", source = var.select, multi = TRUE, classes = "numeric", types = "number", required = TRUE)
   
   # Definition of smoothing parameters
@@ -81,6 +81,22 @@ local({
 						"Exponential region" = c(val = "expR"),
 						"Maximum of the efficiency curve" = c(val = "maxE")
 						))
+						
+						
+  # Plot appearance
+    legend.pos.drop <- rk.XML.dropdown(label = "Position of legend",
+                                     options = list("Bottomright" = c(val = "bottomright"), 
+                                                    "Bottom" = c(val = "bottom"),
+                                                    "Bottomleft" = c(val = "bottomleft"),
+                                                    "Left" = c(val = "left"),
+                                                    "Topleft" = c(val = "topleft", chk = TRUE),
+                                                    "Top" = c(val = "top"),
+                                                    "Topright" = c(val = "topright"),
+                                                    "Right" = c(val = "right"),
+                                                    "Center" = c(val = "center")))
+  ncol.legend.spin <- rk.XML.spinbox(label = "Number of columns in legend", min = "1", initial = "1", real = FALSE)
+  legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, rk.XML.stretch(), label="Legend")
+  
   # Plot preview
   preview.chk <- rk.XML.preview(label = "Preview")
   generic.plot.options <- rk.plotOptions()
@@ -114,14 +130,11 @@ local({
 
   simple.analysis.chk  <- rk.XML.cbox("Complex analysis", value = "1", un.value = "0")
   
-  warn.chk  <- rk.XML.cbox("Surpress warnings", value = "1", un.value = "0")
-  
-  abline.chk  <- rk.XML.cbox("Show line", value = "1", un.value = "0")
-  
+  warn.chk  <- rk.XML.cbox("Show warnings", value = "0", un.value = "-1")
+
   full.dialog <- rk.XML.dialog(
     label = "qPCR analysis",
-    rk.XML.tabbook(tabs = list("Basic settings" = list(basic.settings), 
-                               "Options qPCR analysis" = list(warn.chk),
+    rk.XML.tabbook(tabs = list("Basic settings" = list(basic.settings,warn.chk), 
                                "Smoothing and Pre-processing" = list(smoother.chk, 
 								     method.smooth.drop, 
 								     trans.chk, median.chk, 
@@ -130,11 +143,12 @@ local({
 								     method.norm.drop
 								     ),
 				"Analysis options" = list(Cq.efficiency.drop, simple.analysis.chk, fit.model.drop),
-                               "Plot options" = list(generic.plot.options, abline.chk, 
+                               "Plot options" = list(generic.plot.options, 
                                                      legend.frame)))
   )
   
   JS.calc <- rk.paste.JS(
+    echo("options( warn = ", warn.chk," )\n"),
     js.var.data <- rk.JS.vars(var.data, join = ", "), # get selected vars
     echo("raw.data <- as.matrix(data.frame(rk.list(", selected.x,", ", js.var.data,")))\n\n"),
     
@@ -164,8 +178,11 @@ local({
   
   JS.print <- rk.paste.JS(
     rk.paste.JS.graph(
-      echo("plot(NA, NA, xlim = range(raw.data[, 1]), ylim = range(smooth.data[, -1]))\n"),
-      echo("lapply(2L:ncol(smooth.data), function(y) {try(lines(smooth.data[, 1], smooth.data[, y], col = 2))})\n")
+      echo("n.colors <- ncol(smooth.data[, -1])\n"),
+      echo("colors <- rainbow(n.colors, s = 1, v = 1, start = 0, end = max(1, n.colors - 1)/n.colors, alpha = 1)\n"),
+      echo("plot(NA, NA, xlim = range(smooth.data[, 1]), ylim = range(smooth.data[, -1]))\n"),
+      echo("lapply(1L:ncol(smooth.data[, -1]), function(y) {try(lines(smooth.data[, 1], smooth.data[, y + 1], col = colors[y], lwd = 1.5))})\n"),
+      echo("legend(\"", legend.pos.drop,"\", colnames(smooth.data[, -1]), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
     ),
     ite("full", rk.paste.JS(
       echo("rk.print.literal (\"qPCR analysis results:\")"),
