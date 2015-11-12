@@ -109,7 +109,13 @@ local({
       var.data,
       preview.chk,
       rk.XML.stretch()
-    ))
+    ),
+    rk.XML.col(
+    plot.main,
+    plot.xlab,
+    plot.ylab
+    )
+   )
   
   # Defintion of setting for the analysis
   # Definion for the smoother function
@@ -180,7 +186,7 @@ local({
     rk.paste.JS.graph(
       echo("n.colors <- ncol(smooth.data[, -1])\n"),
       echo("colors <- rainbow(n.colors, s = 1, v = 1, start = 0, end = max(1, n.colors - 1)/n.colors, alpha = 1)\n"),
-      echo("plot(NA, NA, xlim = range(smooth.data[, 1]), ylim = range(smooth.data[, -1]))\n"),
+      echo("plot(NA, NA, xlim = range(smooth.data[, 1]), ylim = range(smooth.data[, -1]), main = \"", plot.main,"\", xlab = \"", plot.xlab,"\", ylab = \"", plot.ylab,"\")\n"),
       echo("lapply(1L:ncol(smooth.data[, -1]), function(y) {try(lines(smooth.data[, 1], smooth.data[, y + 1], col = colors[y], lwd = 1.5))})\n"),
       echo("legend(\"", legend.pos.drop,"\", colnames(smooth.data[, -1]), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
     ),
