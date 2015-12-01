@@ -9,15 +9,15 @@ local({
              email = "Stefan.Roediger@b-tu.de", 
              role = c("aut","cre"))),
     about = list(desc = "GUI interface to perform qPCR amplification curve analysis",
-                 version = "0.0.1-1", url = "https://github.com/devSJR/qpcR_rk")
+                 version = "0.0.1", url = "https://github.com/devSJR/qpcR_rk")
   )
   
   ## help page
   plugin.summary <- rk.rkh.summary(
-    "Analysis of qPCR amplification curve data. The plugin is primarily targetet at the analysis of amplification curve data from nucleic acid experiments."
+    "Analysis of qPCR amplification curve data. The plugin is primarily targeted at the analysis of amplification curve data from nucleic acid experiments."
   )
   plugin.usage <- rk.rkh.usage(
-    "Chose a data set and method to analyse amplification curve data."
+    "Chose a data set and method to analyze amplification curve data."
   )
   
   # Define dependencies
@@ -40,12 +40,16 @@ local({
   # Definition of smoothing parameters
   smoother.chk <- rk.XML.cbox("Use smoother", value = "TRUE", un.value = "FALSE")
   
-  # Backround alteration
+  # Background alteration
   trans.chk <- rk.XML.cbox("Rotate baseline region", value = "TRUE", un.value = "FALSE")
   bg.outliers.chk <- rk.XML.cbox("bg.outliers", value = "TRUE", un.value = "FALSE")
   median.chk <- rk.XML.cbox("Use median", value = "TRUE", un.value = "FALSE")
-
-  method.reg.drop <- rk.XML.dropdown(label = "Backround regression method",
+  
+  background.start.spin <- rk.XML.spinbox(label = "Background start", min = "0", initial = "1", real = FALSE)
+  background.stop.spin <- rk.XML.spinbox(label = "Background cycle stop", min = "1", initial = "10", real = FALSE)
+  background.frame <- rk.XML.frame(rk.XML.row(background.start.spin, background.stop.spin), label = "Background")
+  
+  method.reg.drop <- rk.XML.dropdown(label = "Background regression method",
 				  options = list("Least squares" = c(val = "least"), 
 						"Robust" = c(val = "lmrob", chk = TRUE),
 						"Rank-based linear model" = c(val = "rfit")))
@@ -95,7 +99,7 @@ local({
                                                     "Right" = c(val = "right"),
                                                     "Center" = c(val = "center")))
   ncol.legend.spin <- rk.XML.spinbox(label = "Number of columns in legend", min = "1", initial = "1", real = FALSE)
-  legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, rk.XML.stretch(), label="Legend")
+  legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, rk.XML.stretch(), label = "Legend")
   
   # Plot preview
   preview.chk <- rk.XML.preview(label = "Preview")
@@ -119,20 +123,6 @@ local({
   
   # Defintion of setting for the analysis
   # Definion for the smoother function
-  
-  legend.pos.drop <- rk.XML.dropdown(label = "Position of legend",
-                                     options = list("Bottomright" = c(val = "bottomright"), 
-                                                    "Bottom" = c(val = "bottom"),
-                                                    "Bottomleft" = c(val = "bottomleft"),
-                                                    "Left" = c(val = "left"),
-                                                    "Topleft" = c(val = "topleft", chk = TRUE),
-                                                    "Top" = c(val = "top"),
-                                                    "Topright" = c(val = "topright"),
-                                                    "Right" = c(val = "right"),
-                                                    "Center" = c(val = "center")))
-  ncol.legend.spin <- rk.XML.spinbox(label = "Number of columns in legend", min = "1", initial = "1", real = FALSE)
-  
-  legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, rk.XML.stretch(), label="Legend")
 
   simple.analysis.chk  <- rk.XML.cbox("Complex analysis", value = "1", un.value = "0")
   
@@ -146,8 +136,8 @@ local({
 								     trans.chk, median.chk, 
 								     bg.outliers.chk, 
 								     method.reg.drop, 
-								     method.norm.drop
-								     ),
+								     method.norm.drop,
+								     background.frame),
 				"Analysis options" = list(Cq.efficiency.drop, simple.analysis.chk, fit.model.drop),
                                "Plot options" = list(generic.plot.options, 
                                                      legend.frame)))
@@ -162,7 +152,7 @@ local({
     echo("\t\tCPP(raw.data[, 1], raw.data[, i], smoother = ", smoother.chk,", method = \"", method.smooth.drop,"\", \n"),
     echo("\t\ttrans = ", trans.chk,", bg.outliers = \"", bg.outliers.chk,"\", median = \"", median.chk,"\", \n"),
     echo("\t\tmethod.reg = \"", method.reg.drop,"\",\n"),
-    echo("\t\tmethod.norm = \"", method.norm.drop,"\")[\"y.norm\"]}))\n"),
+    echo("\t\tmethod.norm = \"", method.norm.drop,"\", bg.range = c(", background.start.spin,", ", background.stop.spin,"))[\"y.norm\"]}))\n"),
     echo("smooth.data <- cbind(as.numeric(raw.data[, 1]), smooth.data)\n"),
     echo("colnames(smooth.data) <- colnames(raw.data)\n"),
     
@@ -177,7 +167,9 @@ local({
     echo(")))\n"),
     echo("row.names(res.out) <- colnames(smooth.data[, -1])\n"),
     ite(id(simple.analysis.chk), 
-	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"AIC\", \"Rsq\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n"),
+	   # The output of the plugin can provide all information about the cruve fit and the Cq calculation
+	   # or only a limited set of information (default). 
+	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n"),
 	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\")])\n")
     )
   )
@@ -197,7 +189,7 @@ local({
     )
   )
   
-  rk.plugin.skeleton(
+  qPCRAanalysis <<-  rk.plugin.skeleton(
     about = about.info,
     dependencies = dependencies.info,
     xml = list(dialog = full.dialog),
@@ -214,3 +206,5 @@ local({
   )
   
 })
+
+rk.build.plugin(qPCRAanalysis)
