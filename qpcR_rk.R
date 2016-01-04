@@ -59,7 +59,10 @@ local({
 				    options = list("Savitzky-Golay smoothing filter" = c(val = "savgol", chk = TRUE), 
 						  "Cubic spline smooth" = c(val = "smooth"),
 						  "moving average" = c(val = "mova")))
-
+  
+  # Deal with hook effect
+  hook.chk <- rk.XML.cbox(label = "Ignore hook effect", value = "TRUE", un.value = "FALSE")
+						  
   # Normalization
   method.norm.drop <- rk.XML.dropdown(label = "Normalization",
 				    options = list("No normalization" = c(val = "none", chk = TRUE), 
@@ -137,7 +140,8 @@ local({
 								     bg.outliers.chk, 
 								     method.reg.drop, 
 								     method.norm.drop,
-								     background.frame),
+								     background.frame,
+								     hook.chk),
 				"Analysis options" = list(Cq.efficiency.drop, simple.analysis.chk, fit.model.drop),
                                "Plot options" = list(generic.plot.options, 
                                                      legend.frame)))
@@ -157,6 +161,7 @@ local({
     echo("colnames(smooth.data) <- colnames(raw.data)\n"),
     
     echo("Cq.data <- lapply(2L:ncol(smooth.data), function(i) {\n"),
+    ite(id(hook.chk), echo("smooth.data[which(smooth.data[, i] == max(smooth.data[, i])):length(smooth.data[, i]), i] <- max(smooth.data[, i])\n")),
     echo("\t\tres.fit <- pcrfit(data = smooth.data, cyc = 1, fluo = i, model = ", fit.model.drop,")\n"),
     echo("\t\tres.efficiency <- efficiency(res.fit, type = \"", Cq.efficiency.drop,"\", plot = FALSE)\n"),
     echo("\t\t})\n"),
