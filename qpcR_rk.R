@@ -9,7 +9,7 @@ local({
              email = "Stefan.Roediger@b-tu.de", 
              role = c("aut","cre"))),
     about = list(desc = "GUI interface to perform qPCR amplification curve analysis",
-                 version = "0.0.1", url = "https://github.com/devSJR/qpcR_rk")
+                 version = "0.0.1-1", url = "https://github.com/devSJR/qpcR_rk")
   )
   
   ## help page
@@ -82,9 +82,9 @@ local({
 						  
   Cq.efficiency.drop <- rk.XML.dropdown(label = "Method of efficiency estimation",
 				  options = list("Maximum of the first derivative curve" = c(val = "cpD1"), 
-						"Maximum of the first derivative curve" = c(val = "cpD2", chk = TRUE),
+						"Maximum of the first derivative curve (default)" = c(val = "cpD2", chk = TRUE),
 						"Corbett Research method" = c(val = "CQ"),
-						"Guescini method" = c(val = "Cy0"),
+						"Guescini method (Cy0)" = c(val = "Cy0"),
 						"Exponential region" = c(val = "expR"),
 						"Maximum of the efficiency curve" = c(val = "maxE")
 						))
@@ -130,6 +130,12 @@ local({
   simple.analysis.chk  <- rk.XML.cbox("Complex analysis", value = "1", un.value = "0")
   
   warn.chk  <- rk.XML.cbox("Show warnings", value = "0", un.value = "-1")
+  
+  # Defintion of output options
+  
+  digits.table <- rk.XML.spinbox(label = "Number of digits in table output", min = "1", max = "9", initial = "3", real = FALSE)
+  
+  # Definition of the complet GUI
 
   full.dialog <- rk.XML.dialog(
     label = "qPCR analysis",
@@ -143,8 +149,10 @@ local({
 								     background.frame,
 								     hook.chk),
 				"Analysis options" = list(Cq.efficiency.drop, simple.analysis.chk, fit.model.drop),
-                               "Plot options" = list(generic.plot.options, 
-                                                     legend.frame)))
+				"Plot options" = list(generic.plot.options, legend.frame),
+				"Output options" = list(digits.table)
+			    )
+                   )
   )
   
   JS.calc <- rk.paste.JS(
@@ -171,11 +179,13 @@ local({
     echo("}\n"),
     echo(")))\n"),
     echo("row.names(res.out) <- colnames(smooth.data[, -1])\n"),
-    ite(id(simple.analysis.chk), 
+    js(if(simple.analysis.chk) {
 	   # The output of the plugin can provide all information about the cruve fit and the Cq calculation
 	   # or only a limited set of information (default). 
-	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n"),
+	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n")
+	   } else {
 	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\")])\n")
+	   }
     )
   )
   
@@ -189,7 +199,7 @@ local({
     ),
     ite("full", rk.paste.JS(
       echo("rk.print.literal (\"qPCR analysis results:\")"),
-      echo("\nrk.print(res.out)\n"),
+      echo("\nrk.print(res.out, digits = ", digits.table,")\n"),
       level = 3)
     )
   )
