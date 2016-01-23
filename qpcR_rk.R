@@ -9,7 +9,7 @@ local({
              email = "Stefan.Roediger@b-tu.de", 
              role = c("aut","cre"))),
     about = list(desc = "GUI interface to perform qPCR amplification curve analysis",
-                 version = "0.0.1-1", url = "https://github.com/devSJR/qpcR_rk")
+                 version = "0.0.1-2", url = "https://github.com/devSJR/qpcR_rk")
   )
   
   ## help page
@@ -23,8 +23,11 @@ local({
   # Define dependencies
   dependencies.info <- rk.XML.dependencies(dependencies = list(rkward.min = "0.6.3"), 
                                            package = list(c(name = "chipPCR", min = "0.0.8.10"),
+							  c(name = "DT", min = "0.1"),
 							  c(name = "MBmca", min = "0.0.3-5"),
+							  c(name = "rpivotTable", min = "0.1.5.7"),
 							  c(name = "qpcR", min = "1.4.0")))
+
   # General settings
   
   # Definition of plot labels and appearance
@@ -91,18 +94,27 @@ local({
 						
 						
   # Plot appearance
-    legend.pos.drop <- rk.XML.dropdown(label = "Position of legend",
-                                     options = list("Bottomright" = c(val = "bottomright"), 
-                                                    "Bottom" = c(val = "bottom"),
-                                                    "Bottomleft" = c(val = "bottomleft"),
-                                                    "Left" = c(val = "left"),
-                                                    "Topleft" = c(val = "topleft", chk = TRUE),
-                                                    "Top" = c(val = "top"),
-                                                    "Topright" = c(val = "topright"),
-                                                    "Right" = c(val = "right"),
-                                                    "Center" = c(val = "center")))
+  legend.pos.drop <- rk.XML.dropdown(label = "Position of legend",
+				    options = list("Bottomright" = c(val = "bottomright"), 
+						  "Bottom" = c(val = "bottom"),
+						  "Bottomleft" = c(val = "bottomleft"),
+						  "Left" = c(val = "left"),
+						  "Topleft" = c(val = "topleft", chk = TRUE),
+						  "Top" = c(val = "top"),
+						  "Topright" = c(val = "topright"),
+						  "Right" = c(val = "right"),
+						  "Center" = c(val = "center")))
+  
   ncol.legend.spin <- rk.XML.spinbox(label = "Number of columns in legend", min = "1", initial = "1", real = FALSE)
-  legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, rk.XML.stretch(), label = "Legend")
+  
+  ## Add the Cq value and the amplification efficiency to the legend
+  Cq.Eff.chk <- rk.XML.cbox(label = "Add Cq and Efficiency to legend", value = "1", un.value = "0", chk = FALSE)
+  
+  # Add horizontal line in baseline region
+  abline.h.chk <- rk.XML.cbox(label = "Horizontal baseline", value = "TRUE", un.value = "FALSE", chk = FALSE)
+  
+  legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, Cq.Eff.chk, 
+			       abline.h.chk, rk.XML.stretch(), label = "Legend")
   
   # Plot preview
   preview.chk <- rk.XML.preview(label = "Preview")
@@ -124,18 +136,22 @@ local({
     )
    )
   
-  # Defintion of setting for the analysis
-  # Definion for the smoother function
+  # Definition of setting for the analysis
+  # Definition for the smoother function
 
   simple.analysis.chk  <- rk.XML.cbox("Complex analysis", value = "1", un.value = "0")
   
   warn.chk  <- rk.XML.cbox("Show warnings", value = "0", un.value = "-1")
   
-  # Defintion of output options
+  # Definition of output options
   
   digits.table <- rk.XML.spinbox(label = "Number of digits in table output", min = "1", max = "9", initial = "3", real = FALSE)
   
-  # Definition of the complet GUI
+  ## Table outputs
+  interactive.table.chk <- rk.XML.cbox(label = "Use interactive table", value = "1", un.value = "0", chk = FALSE)
+  interactive.pivot.table.chk <- rk.XML.cbox(label = "Use interactive Pivot table", value = "1", un.value = "0", chk = FALSE)
+  
+  # Definition of the complete GUI
 
   full.dialog <- rk.XML.dialog(
     label = "qPCR analysis",
@@ -150,13 +166,13 @@ local({
 								     hook.chk),
 				"Analysis options" = list(Cq.efficiency.drop, simple.analysis.chk, fit.model.drop),
 				"Plot options" = list(generic.plot.options, legend.frame),
-				"Output options" = list(digits.table)
+				"Output options" = list(digits.table, interactive.pivot.table.chk, interactive.table.chk)
 			    )
                    )
   )
   
   JS.calc <- rk.paste.JS(
-    echo("options( warn = ", warn.chk," )\n"),
+    echo("options(warn = ", warn.chk,")\n"),
     js.var.data <- rk.JS.vars(var.data, join = ", "), # get selected vars
     echo("raw.data <- as.matrix(data.frame(rk.list(", selected.x,", ", js.var.data,")))\n\n"),
     
@@ -178,13 +194,13 @@ local({
     echo("\t\tas.data.frame(Cq.data[[i]])\n"),
     echo("}\n"),
     echo(")))\n"),
-    echo("row.names(res.out) <- colnames(smooth.data[, -1])\n"),
+    echo("res.out <- cbind(Sample = colnames(smooth.data[, -1]), res.out)\n"),
     js(if(simple.analysis.chk) {
 	   # The output of the plugin can provide all information about the cruve fit and the Cq calculation
 	   # or only a limited set of information (default). 
-	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n")
+	   echo("res.out <- as.data.frame(res.out[, c(\"Sample\", \"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n")
 	   } else {
-	   echo("res.out <- as.data.frame(res.out[, c(\"cpD2\", \"eff\", \"fluo\")])\n")
+	   echo("res.out <- as.data.frame(res.out[, c(\"Sample\", \"cpD2\", \"eff\", \"fluo\")])\n")
 	   }
     )
   )
@@ -195,11 +211,21 @@ local({
       echo("colors <- rainbow(n.colors, s = 1, v = 1, start = 0, end = max(1, n.colors - 1)/n.colors, alpha = 1)\n"),
       echo("plot(NA, NA, xlim = range(smooth.data[, 1]), ylim = range(smooth.data[, -1]), main = \"", plot.main,"\", xlab = \"", plot.xlab,"\", ylab = \"", plot.ylab,"\")\n"),
       echo("lapply(1L:ncol(smooth.data[, -1]), function(y) {try(lines(smooth.data[, 1], smooth.data[, y + 1], col = colors[y], lwd = 1.5))})\n"),
-      echo("legend(\"", legend.pos.drop,"\", colnames(smooth.data[, -1]), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
+      js(if(abline.h.chk) {
+			    echo("abline(h = 0, col = \"grey\")\n")
+			  }),
+      js(if(Cq.Eff.chk){
+		echo("legend(\"", legend.pos.drop,"\", paste(colnames(smooth.data[, -1]), formatC(unlist(res.out[, 2]), digits = 3), formatC(unlist(res.out[, 3]), digits = 3)), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
+	      } else {
+		echo("legend(\"", legend.pos.drop,"\", colnames(smooth.data[, -1]), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
+	      }
+      )
     ),
     ite("full", rk.paste.JS(
       echo("rk.print.literal (\"qPCR analysis results:\")"),
       echo("\nrk.print(res.out, digits = ", digits.table,")\n"),
+      js(if(interactive.table.chk) {echo("\nrk.print(datatable(res.out))\n")}),
+      js(if(interactive.pivot.table.chk) {echo("\nrk.print(rpivotTable(res.out))\n")}),
       level = 3)
     )
   )
@@ -208,7 +234,7 @@ local({
     about = about.info,
     dependencies = dependencies.info,
     xml = list(dialog = full.dialog),
-    js = list(require = c("chipPCR", "MBmca", "qpcR"),
+    js = list(require = c("chipPCR", "DT", "MBmca", "qpcR", "rpivotTable"),
               calculate = JS.calc,
               doPrintout = JS.print),
     rkh = list(plugin.summary, plugin.usage),
