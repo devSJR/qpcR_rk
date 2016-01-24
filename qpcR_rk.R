@@ -9,7 +9,7 @@ local({
              email = "Stefan.Roediger@b-tu.de", 
              role = c("aut","cre"))),
     about = list(desc = "GUI interface to perform qPCR amplification curve analysis",
-                 version = "0.0.1-2", url = "https://github.com/devSJR/qpcR_rk")
+                 version = "0.0.1-3", url = "https://github.com/devSJR/qpcR_rk")
   )
   
   ## help page
@@ -23,11 +23,11 @@ local({
   # Define dependencies
   dependencies.info <- rk.XML.dependencies(dependencies = list(rkward.min = "0.6.3"), 
                                            package = list(c(name = "chipPCR", min = "0.0.8.10"),
-							  c(name = "DT", min = "0.1"),
-							  c(name = "MBmca", min = "0.0.3-5"),
-							  c(name = "rpivotTable", min = "0.1.5.7"),
-							  c(name = "qpcR", min = "1.4.0")))
-
+                                                          c(name = "DT", min = "0.1"),
+                                                          c(name = "MBmca", min = "0.0.3-5"),
+                                                          c(name = "rpivotTable", min = "0.1.5.7"),
+                                                          c(name = "qpcR", min = "1.4.0")))
+  
   # General settings
   
   # Definition of plot labels and appearance
@@ -53,57 +53,57 @@ local({
   background.frame <- rk.XML.frame(rk.XML.row(background.start.spin, background.stop.spin), label = "Background")
   
   method.reg.drop <- rk.XML.dropdown(label = "Background regression method",
-				  options = list("Least squares" = c(val = "least"), 
-						"Robust" = c(val = "lmrob", chk = TRUE),
-						"Rank-based linear model" = c(val = "rfit")))
+                                     options = list("Least squares" = c(val = "least"), 
+                                                    "Robust" = c(val = "lmrob", chk = TRUE),
+                                                    "Rank-based linear model" = c(val = "rfit")))
   
   # Smoothing
   method.smooth.drop <- rk.XML.dropdown(label = "Smoothing method",
-				    options = list("Savitzky-Golay smoothing filter" = c(val = "savgol", chk = TRUE), 
-						  "Cubic spline smooth" = c(val = "smooth"),
-						  "moving average" = c(val = "mova")))
+                                        options = list("Savitzky-Golay smoothing filter" = c(val = "savgol", chk = TRUE), 
+                                                       "Cubic spline smooth" = c(val = "smooth"),
+                                                       "moving average" = c(val = "mova")))
   
   # Deal with hook effect
   hook.chk <- rk.XML.cbox(label = "Ignore hook effect", value = "TRUE", un.value = "FALSE")
-						  
+  
   # Normalization
   method.norm.drop <- rk.XML.dropdown(label = "Normalization",
-				    options = list("No normalization" = c(val = "none", chk = TRUE), 
-						  "Minimum-Maximum" = c(val = "minm"),
-						  "Maximum" = c(val = "max"),
-						  "z-score" = c(val = "zscore")
-						  ))
+                                      options = list("No normalization" = c(val = "none", chk = TRUE), 
+                                                     "Minimum-Maximum" = c(val = "minm"),
+                                                     "Maximum" = c(val = "max"),
+                                                     "z-score" = c(val = "zscore")
+                                      ))
   
   # Model selection and Cq calculation
   fit.model.drop <- rk.XML.dropdown(label = "Fitting model",
-				    options = list("Nonlinear sigmoidal model - l4" = c(val = "l4"), 
-						  "Nonlinear sigmoidal model - l5" = c(val = "l5", chk = TRUE),
-						  "Nonlinear sigmoidal model - l6" = c(val = "l6"),
-						  "Nonlinear sigmoidal model - l7" = c(val = "l7"),
-						  "Spline" = c(val = "spl3")
-						  ))
-						  
+                                    options = list("Nonlinear sigmoidal model - l4" = c(val = "l4"), 
+                                                   "Nonlinear sigmoidal model - l5" = c(val = "l5", chk = TRUE),
+                                                   "Nonlinear sigmoidal model - l6" = c(val = "l6"),
+                                                   "Nonlinear sigmoidal model - l7" = c(val = "l7"),
+                                                   "Spline" = c(val = "spl3")
+                                    ))
+  
   Cq.efficiency.drop <- rk.XML.dropdown(label = "Method of efficiency estimation",
-				  options = list("Maximum of the first derivative curve" = c(val = "cpD1"), 
-						"Maximum of the first derivative curve (default)" = c(val = "cpD2", chk = TRUE),
-						"Corbett Research method" = c(val = "CQ"),
-						"Guescini method (Cy0)" = c(val = "Cy0"),
-						"Exponential region" = c(val = "expR"),
-						"Maximum of the efficiency curve" = c(val = "maxE")
-						))
-						
-						
+                                        options = list("Maximum of the first derivative curve" = c(val = "cpD1"), 
+                                                       "Maximum of the first derivative curve (default)" = c(val = "cpD2", chk = TRUE),
+                                                       "Corbett Research method" = c(val = "CQ"),
+                                                       "Guescini method (Cy0)" = c(val = "Cy0"),
+                                                       "Exponential region" = c(val = "expR"),
+                                                       "Maximum of the efficiency curve" = c(val = "maxE")
+                                        ))
+  
+  
   # Plot appearance
   legend.pos.drop <- rk.XML.dropdown(label = "Position of legend",
-				    options = list("Bottomright" = c(val = "bottomright"), 
-						  "Bottom" = c(val = "bottom"),
-						  "Bottomleft" = c(val = "bottomleft"),
-						  "Left" = c(val = "left"),
-						  "Topleft" = c(val = "topleft", chk = TRUE),
-						  "Top" = c(val = "top"),
-						  "Topright" = c(val = "topright"),
-						  "Right" = c(val = "right"),
-						  "Center" = c(val = "center")))
+                                     options = list("Bottomright" = c(val = "bottomright"), 
+                                                    "Bottom" = c(val = "bottom"),
+                                                    "Bottomleft" = c(val = "bottomleft"),
+                                                    "Left" = c(val = "left"),
+                                                    "Topleft" = c(val = "topleft", chk = TRUE),
+                                                    "Top" = c(val = "top"),
+                                                    "Topright" = c(val = "topright"),
+                                                    "Right" = c(val = "right"),
+                                                    "Center" = c(val = "center")))
   
   ncol.legend.spin <- rk.XML.spinbox(label = "Number of columns in legend", min = "1", initial = "1", real = FALSE)
   
@@ -114,7 +114,7 @@ local({
   abline.h.chk <- rk.XML.cbox(label = "Horizontal baseline", value = "TRUE", un.value = "FALSE", chk = FALSE)
   
   legend.frame <- rk.XML.frame(legend.pos.drop, ncol.legend.spin, Cq.Eff.chk, 
-			       abline.h.chk, rk.XML.stretch(), label = "Legend")
+                               abline.h.chk, rk.XML.stretch(), label = "Legend")
   
   # Plot preview
   preview.chk <- rk.XML.preview(label = "Preview")
@@ -130,16 +130,16 @@ local({
       rk.XML.stretch()
     ),
     rk.XML.col(
-    plot.main,
-    plot.xlab,
-    plot.ylab
+      plot.main,
+      plot.xlab,
+      plot.ylab
     )
-   )
+  )
   
   # Definition of setting for the analysis
   # Definition for the smoother function
-
-  simple.analysis.chk  <- rk.XML.cbox("Complex analysis", value = "1", un.value = "0")
+  
+  complex..analysis.chk  <- rk.XML.cbox("Complex analysis", value = "1", un.value = "0", chk = FALSE)
   
   warn.chk  <- rk.XML.cbox("Show warnings", value = "0", un.value = "-1")
   
@@ -151,24 +151,27 @@ local({
   interactive.table.chk <- rk.XML.cbox(label = "Use interactive table", value = "1", un.value = "0", chk = FALSE)
   interactive.pivot.table.chk <- rk.XML.cbox(label = "Use interactive Pivot table", value = "1", un.value = "0", chk = FALSE)
   
+  ## Results and data output
+  output.smooth.data.chk <- rk.XML.cbox(label = "Save smoothed data", value = "1", un.value = "0", chk = FALSE)
+  
   # Definition of the complete GUI
-
+  
   full.dialog <- rk.XML.dialog(
     label = "qPCR analysis",
     rk.XML.tabbook(tabs = list("Basic settings" = list(basic.settings,warn.chk), 
                                "Smoothing and Pre-processing" = list(smoother.chk, 
-								     method.smooth.drop, 
-								     trans.chk, median.chk, 
-								     bg.outliers.chk, 
-								     method.reg.drop, 
-								     method.norm.drop,
-								     background.frame,
-								     hook.chk),
-				"Analysis options" = list(Cq.efficiency.drop, simple.analysis.chk, fit.model.drop),
-				"Plot options" = list(generic.plot.options, legend.frame),
-				"Output options" = list(digits.table, interactive.pivot.table.chk, interactive.table.chk)
-			    )
-                   )
+                                                                     method.smooth.drop, 
+                                                                     trans.chk, median.chk, 
+                                                                     bg.outliers.chk, 
+                                                                     method.reg.drop, 
+                                                                     method.norm.drop,
+                                                                     background.frame,
+                                                                     hook.chk),
+                               "Analysis options" = list(Cq.efficiency.drop, complex..analysis.chk, fit.model.drop),
+                               "Plot options" = list(generic.plot.options, legend.frame),
+                               "Output options" = list(digits.table, interactive.pivot.table.chk, interactive.table.chk, output.smooth.data.chk)
+    )
+    )
   )
   
   JS.calc <- rk.paste.JS(
@@ -176,13 +179,15 @@ local({
     js.var.data <- rk.JS.vars(var.data, join = ", "), # get selected vars
     echo("raw.data <- as.matrix(data.frame(rk.list(", selected.x,", ", js.var.data,")))\n\n"),
     
-    echo("smooth.data <- as.data.frame(sapply(2L:ncol(raw.data), function(i) {\n"),
-    echo("\t\tCPP(raw.data[, 1], raw.data[, i], smoother = ", smoother.chk,", method = \"", method.smooth.drop,"\", \n"),
-    echo("\t\ttrans = ", trans.chk,", bg.outliers = \"", bg.outliers.chk,"\", median = \"", median.chk,"\", \n"),
-    echo("\t\tmethod.reg = \"", method.reg.drop,"\",\n"),
-    echo("\t\tmethod.norm = \"", method.norm.drop,"\", bg.range = c(", background.start.spin,", ", background.stop.spin,"))[\"y.norm\"]}))\n"),
-    echo("smooth.data <- cbind(as.numeric(raw.data[, 1]), smooth.data)\n"),
-    echo("colnames(smooth.data) <- colnames(raw.data)\n"),
+    echo("
+      smooth.data <- as.data.frame(sapply(2L:ncol(raw.data), function(i) {
+      CPP(raw.data[, 1], raw.data[, i], smoother = ", smoother.chk,", method = \"", method.smooth.drop,"\", 
+      trans = ", trans.chk,", bg.outliers = \"", bg.outliers.chk,"\", median = \"", median.chk,"\", 
+      method.reg = \"", method.reg.drop,"\",
+      method.norm = \"", method.norm.drop,"\", bg.range = c(", background.start.spin,", ", background.stop.spin,"))[\"y.norm\"]}))
+      smooth.data <- cbind(as.numeric(raw.data[, 1]), smooth.data)
+      colnames(smooth.data) <- colnames(raw.data)
+    \n"),
     
     echo("Cq.data <- lapply(2L:ncol(smooth.data), function(i) {\n"),
     ite(id(hook.chk), echo("smooth.data[which(smooth.data[, i] == max(smooth.data[, i])):length(smooth.data[, i]), i] <- max(smooth.data[, i])\n")),
@@ -195,15 +200,16 @@ local({
     echo("}\n"),
     echo(")))\n"),
     echo("res.out <- cbind(Sample = colnames(smooth.data[, -1]), res.out)\n"),
-    js(if(simple.analysis.chk) {
-	   # The output of the plugin can provide all information about the cruve fit and the Cq calculation
-	   # or only a limited set of information (default). 
-	   echo("res.out <- as.data.frame(res.out[, c(\"Sample\", \"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n")
-	   } else {
-	   echo("res.out <- as.data.frame(res.out[, c(\"Sample\", \"cpD2\", \"eff\", \"fluo\")])\n")
-	   }
+    js(if(complex..analysis.chk) {
+      # The output of the plugin can provide all information about the cruve fit and the Cq calculation
+      # or only a limited set of information (default). 
+      echo("res.out <- as.data.frame(res.out[, c(\"Sample\", \"cpD2\", \"eff\", \"fluo\", \"resVar\", \"AICc\", \"Rsq.ad\", \"cpD1\", \"cpE\", \"cpR\", \"cpT\", \"Cy0\", \"cpCQ\", \"cpMR\", \"init1\", \"init2\", \"cf\")])\n")
+    } else {
+      echo("res.out <- as.data.frame(res.out[, c(\"Sample\", \"cpD2\", \"eff\", \"fluo\")])\n")
+    }
     )
   )
+  
   
   JS.print <- rk.paste.JS(
     rk.paste.JS.graph(
@@ -212,13 +218,13 @@ local({
       echo("plot(NA, NA, xlim = range(smooth.data[, 1]), ylim = range(smooth.data[, -1]), main = \"", plot.main,"\", xlab = \"", plot.xlab,"\", ylab = \"", plot.ylab,"\")\n"),
       echo("lapply(1L:ncol(smooth.data[, -1]), function(y) {try(lines(smooth.data[, 1], smooth.data[, y + 1], col = colors[y], lwd = 1.5))})\n"),
       js(if(abline.h.chk) {
-			    echo("abline(h = 0, col = \"grey\")\n")
-			  }),
+        echo("abline(h = 0, col = \"grey\")\n")
+      }),
       js(if(Cq.Eff.chk){
-		echo("legend(\"", legend.pos.drop,"\", paste(colnames(smooth.data[, -1]), formatC(unlist(res.out[, 2]), digits = 3), formatC(unlist(res.out[, 3]), digits = 3)), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
-	      } else {
-		echo("legend(\"", legend.pos.drop,"\", colnames(smooth.data[, -1]), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
-	      }
+        echo("legend(\"", legend.pos.drop,"\", paste(colnames(smooth.data[, -1]), formatC(unlist(res.out[, 2]), digits = 3), formatC(unlist(res.out[, 3]), digits = 3)), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
+      } else {
+        echo("legend(\"", legend.pos.drop,"\", colnames(smooth.data[, -1]), ncol = ", ncol.legend.spin,", pch = 15, col = colors)")
+      }
       )
     ),
     ite("full", rk.paste.JS(
